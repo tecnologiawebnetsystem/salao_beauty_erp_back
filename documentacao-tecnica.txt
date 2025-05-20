@@ -1,0 +1,640 @@
+=============================================================
+DOCUMENTAÇÃO TÉCNICA - API RESTFUL SALÃO DE BELEZA
+=============================================================
+KLEBER GONÇALVES
+=============================================================
+
+1. VISÃO GERAL
+=============================================================
+
+Esta documentação descreve a API RESTful desenvolvida para o sistema de gerenciamento de salão de beleza, que serve como backend para um aplicativo Flutter. A API fornece endpoints para gerenciar usuários, clientes, serviços, agendamentos, pacotes, transações financeiras e outras funcionalidades essenciais para a operação de um salão de beleza.
+
+2. TECNOLOGIAS UTILIZADAS
+=============================================================
+
+2.1. Linguagens e Frameworks
+----------------------------
+- Linguagem de Programação: JavaScript (Node.js)
+- Framework Web: Express.js
+- Banco de Dados: MySQL
+- ORM: Nenhum (Queries SQL nativas com mysql2/promise)
+
+2.2. Bibliotecas Principais
+---------------------------
+- express: Framework web para Node.js
+- mysql2: Driver MySQL para Node.js com suporte a Promises
+- jsonwebtoken: Implementação de JSON Web Tokens (JWT)
+- bcrypt: Biblioteca para hash de senhas
+- cors: Middleware para habilitar CORS (Cross-Origin Resource Sharing)
+- helmet: Middleware para segurança HTTP
+- morgan: Middleware para logging de requisições HTTP
+- swagger-jsdoc e swagger-ui-express: Documentação da API
+- dotenv: Carregamento de variáveis de ambiente
+- uuid: Geração de identificadores únicos
+
+3. ARQUITETURA DO SISTEMA
+=============================================================
+
+A API segue o padrão de arquitetura MVC (Model-View-Controller), adaptado para APIs RESTful:
+
+- Models: Responsáveis pela lógica de negócios e interação com o banco de dados
+- Controllers: Processam as requisições, interagem com os models e retornam as respostas
+- Routes: Definem os endpoints da API e direcionam as requisições para os controllers apropriados
+
+3.1. Fluxo de Dados
+------------------
+1. O cliente (aplicativo Flutter) envia uma requisição HTTP para um endpoint da API
+2. O middleware de autenticação verifica o token JWT (se necessário)
+3. A rota direciona a requisição para o controller apropriado
+4. O controller processa a requisição e interage com o model
+5. O model executa operações no banco de dados
+6. O controller formata a resposta e a envia de volta ao cliente
+
+4. ESTRUTURA DE DIRETÓRIOS
+=============================================================
+
+/
+├── config/                 # Configurações do sistema
+│   ├── database.js         # Configuração de conexão com o banco de dados
+│   ├── jwt.js              # Configuração de JWT
+│   └── swagger.js          # Configuração da documentação Swagger
+├── controllers/            # Controllers da API
+│   ├── authController.js   # Autenticação
+│   ├── usuariosController.js
+│   ├── clientesController.js
+│   └── ...
+├── middleware/             # Middleware da aplicação
+│   ├── auth.js             # Middleware de autenticação e autorização
+│   └── errorHandler.js     # Middleware de tratamento de erros
+├── models/                 # Models da aplicação
+│   ├── usuarioModel.js
+│   ├── clienteModel.js
+│   └── ...
+├── routes/                 # Rotas da API
+│   ├── authRoutes.js
+│   ├── usuariosRoutes.js
+│   └── ...
+├── database/               # Scripts e schemas do banco de dados
+│   └── schema.sql          # Schema do banco de dados
+├── .env                    # Variáveis de ambiente (não versionado)
+├── .env.example            # Exemplo de variáveis de ambiente
+├── package.json            # Dependências e scripts
+└── server.js               # Ponto de entrada da aplicação
+
+5. CONFIGURAÇÃO E INSTALAÇÃO
+=============================================================
+
+5.1. Requisitos
+--------------
+- Node.js (v14.x ou superior)
+- MySQL (v5.7 ou superior)
+
+5.2. Instalação
+--------------
+1. Clone o repositório:
+   git clone [URL_DO_REPOSITORIO]
+   cd api-salao-beleza
+
+2. Instale as dependências:
+   npm install
+
+3. Configure as variáveis de ambiente:
+   cp .env.example .env
+   # Edite o arquivo .env com suas configurações
+
+4. Crie o banco de dados:
+   mysql -u [USUARIO] -p < database/schema.sql
+
+5. Inicie o servidor:
+   npm start
+
+5.3. Variáveis de Ambiente
+-------------------------
+- PORT: Porta em que o servidor será executado (padrão: 3000)
+- NODE_ENV: Ambiente de execução (development, production)
+- DB_HOST: Host do banco de dados
+- DB_USER: Usuário do banco de dados
+- DB_PASSWORD: Senha do banco de dados
+- DB_NAME: Nome do banco de dados
+- DB_PORT: Porta do banco de dados (padrão: 3306)
+- JWT_SECRET: Chave secreta para assinatura de tokens JWT
+- JWT_EXPIRES_IN: Tempo de expiração dos tokens JWT (ex: "1d" para um dia)
+
+6. AUTENTICAÇÃO E AUTORIZAÇÃO
+=============================================================
+
+6.1. Autenticação
+---------------
+A API utiliza JSON Web Tokens (JWT) para autenticação. O fluxo de autenticação é o seguinte:
+
+1. O cliente envia credenciais (email e senha) para o endpoint `/api/auth/login`
+2. O servidor valida as credenciais e, se válidas, gera um token JWT
+3. O cliente armazena o token e o inclui no cabeçalho `Authorization` de requisições subsequentes
+4. O middleware de autenticação valida o token em cada requisição protegida
+
+6.2. Autorização
+--------------
+A API implementa um sistema de autorização baseado em papéis (RBAC - Role-Based Access Control). Os papéis disponíveis são:
+
+- admin: Acesso total ao sistema
+- gerente: Acesso à maioria das funcionalidades, exceto operações críticas
+- funcionario: Acesso limitado às funcionalidades relacionadas ao seu trabalho
+
+O middleware de autorização verifica se o usuário tem o papel necessário para acessar determinados endpoints.
+
+7. ENDPOINTS DA API
+=============================================================
+
+A API é organizada em recursos RESTful. Abaixo estão os principais endpoints:
+
+7.1. Autenticação
+---------------
+- POST /api/auth/login: Autenticar usuário
+- GET /api/auth/me: Obter dados do usuário autenticado
+- POST /api/auth/change-password: Alterar senha do usuário autenticado
+
+7.2. Usuários
+-----------
+- GET /api/usuarios: Listar todos os usuários
+- GET /api/usuarios/{id}: Obter usuário por ID
+- POST /api/usuarios: Criar novo usuário
+- PUT /api/usuarios/{id}: Atualizar usuário
+- POST /api/usuarios/{id}/reset-password: Resetar senha do usuário
+- DELETE /api/usuarios/{id}: Excluir usuário
+
+7.3. Clientes
+-----------
+- GET /api/clientes: Listar todos os clientes
+- GET /api/clientes/{id}: Obter cliente por ID
+- POST /api/clientes: Criar novo cliente
+- PUT /api/clientes/{id}: Atualizar cliente
+- DELETE /api/clientes/{id}: Excluir cliente
+
+7.4. Categorias de Serviços
+-------------------------
+- GET /api/categorias-servicos: Listar todas as categorias
+- GET /api/categorias-servicos/{id}: Obter categoria por ID
+- POST /api/categorias-servicos: Criar nova categoria
+- PUT /api/categorias-servicos/{id}: Atualizar categoria
+- DELETE /api/categorias-servicos/{id}: Excluir categoria
+
+7.5. Serviços
+-----------
+- GET /api/servicos: Listar todos os serviços
+- GET /api/servicos/{id}: Obter serviço por ID
+- GET /api/servicos/funcionario/{funcionarioId}: Listar serviços por funcionário
+- POST /api/servicos: Criar novo serviço
+- PUT /api/servicos/{id}: Atualizar serviço
+- DELETE /api/servicos/{id}: Excluir serviço
+
+7.6. Funcionários
+--------------
+- GET /api/funcionarios: Listar todos os funcionários
+- GET /api/funcionarios/{id}: Obter funcionário por ID
+- POST /api/funcionarios: Criar novo funcionário
+- PUT /api/funcionarios/{id}: Atualizar funcionário
+- DELETE /api/funcionarios/{id}: Excluir funcionário
+- GET /api/funcionarios/{id}/especialidades: Listar especialidades do funcionário
+- POST /api/funcionarios/{id}/especialidades: Adicionar especialidade
+- DELETE /api/funcionarios/especialidades/{id}: Remover especialidade
+- GET /api/funcionarios/{id}/servicos: Listar serviços do funcionário
+- POST /api/funcionarios/{id}/servicos: Adicionar serviço
+- DELETE /api/funcionarios/{funcionarioId}/servicos/{servicoId}: Remover serviço
+- GET /api/funcionarios/{id}/horarios: Listar horários de trabalho
+- POST /api/funcionarios/{id}/horarios: Adicionar horário
+- PUT /api/funcionarios/horarios/{id}: Atualizar horário
+- DELETE /api/funcionarios/horarios/{id}: Remover horário
+
+7.7. Pacotes
+----------
+- GET /api/pacotes: Listar todos os pacotes
+- GET /api/pacotes/{id}: Obter pacote por ID
+- POST /api/pacotes: Criar novo pacote
+- PUT /api/pacotes/{id}: Atualizar pacote
+- DELETE /api/pacotes/{id}: Excluir pacote
+- GET /api/pacotes/{id}/itens: Listar itens do pacote
+- POST /api/pacotes/{id}/itens: Adicionar item ao pacote
+- PUT /api/pacotes/itens/{id}: Atualizar item do pacote
+- DELETE /api/pacotes/itens/{id}: Remover item do pacote
+
+7.8. Assinaturas
+-------------
+- GET /api/assinaturas: Listar todas as assinaturas
+- GET /api/assinaturas/{id}: Obter assinatura por ID
+- GET /api/assinaturas/cliente/{clienteId}: Listar assinaturas por cliente
+- POST /api/assinaturas: Criar nova assinatura
+- PUT /api/assinaturas/{id}: Atualizar assinatura
+- DELETE /api/assinaturas/{id}: Excluir assinatura
+- GET /api/assinaturas/{id}/usos: Listar usos da assinatura
+- POST /api/assinaturas/{id}/usos: Adicionar uso à assinatura
+- DELETE /api/assinaturas/usos/{id}: Remover uso da assinatura
+
+7.9. Agendamentos
+--------------
+- GET /api/agendamentos: Listar todos os agendamentos
+- GET /api/agendamentos/{id}: Obter agendamento por ID
+- GET /api/agendamentos/cliente/{clienteId}: Listar agendamentos por cliente
+- GET /api/agendamentos/funcionario/{funcionarioId}: Listar agendamentos por funcionário
+- POST /api/agendamentos: Criar novo agendamento
+- PUT /api/agendamentos/{id}: Atualizar agendamento
+- DELETE /api/agendamentos/{id}: Excluir agendamento
+- GET /api/agendamentos/disponibilidade: Verificar disponibilidade de horários
+
+7.10. Transações Financeiras
+-------------------------
+- GET /api/transacoes: Listar todas as transações
+- GET /api/transacoes/{id}: Obter transação por ID
+- POST /api/transacoes: Criar nova transação
+- PUT /api/transacoes/{id}: Atualizar transação
+- DELETE /api/transacoes/{id}: Excluir transação
+- GET /api/transacoes/resumo: Obter resumo financeiro
+
+7.11. Configurações
+----------------
+- GET /api/configuracoes: Listar todas as configurações
+- GET /api/configuracoes/{chave}: Obter configuração por chave
+- POST /api/configuracoes: Criar nova configuração
+- PUT /api/configuracoes/{chave}: Atualizar configuração
+- DELETE /api/configuracoes/{chave}: Excluir configuração
+
+8. MODELOS DE DADOS
+=============================================================
+
+8.1. Usuário
+----------
+{
+  id: "uuid",
+  nome: "string",
+  email: "string",
+  senha: "string (hash)",
+  tipo: "enum (admin, gerente, funcionario)",
+  ativo: "boolean",
+  data_criacao: "datetime",
+  data_atualizacao: "datetime"
+}
+
+8.2. Cliente
+----------
+{
+  id: "uuid",
+  nome: "string",
+  email: "string",
+  telefone: "string",
+  cpf: "string (opcional)",
+  endereco: "string (opcional)",
+  data_nascimento: "date (opcional)",
+  observacoes: "string (opcional)",
+  ultima_visita: "datetime (opcional)",
+  total_gasto: "decimal",
+  qtd_agendamentos: "integer",
+  data_criacao: "datetime",
+  data_atualizacao: "datetime"
+}
+
+8.3. Categoria de Serviço
+----------------------
+{
+  id: "uuid",
+  nome: "string",
+  descricao: "string (opcional)",
+  ativo: "boolean",
+  data_criacao: "datetime",
+  data_atualizacao: "datetime"
+}
+
+8.4. Serviço
+----------
+{
+  id: "uuid",
+  nome: "string",
+  descricao: "string",
+  preco: "decimal",
+  duracao_minutos: "integer",
+  categoria_id: "uuid (opcional)",
+  ativo: "boolean",
+  data_criacao: "datetime",
+  data_atualizacao: "datetime"
+}
+
+8.5. Funcionário
+-------------
+{
+  id: "uuid",
+  nome: "string",
+  email: "string",
+  telefone: "string",
+  cpf: "string (opcional)",
+  endereco: "string (opcional)",
+  data_nascimento: "date (opcional)",
+  cargo: "string",
+  taxa_comissao: "decimal",
+  observacoes: "string (opcional)",
+  ativo: "boolean",
+  imagem_perfil: "string (opcional)",
+  data_criacao: "datetime",
+  data_atualizacao: "datetime"
+}
+
+8.6. Pacote
+---------
+{
+  id: "uuid",
+  nome: "string",
+  descricao: "string",
+  preco_pacote: "decimal",
+  preco_regular: "decimal",
+  validade_dias: "integer",
+  ativo: "boolean",
+  data_criacao: "datetime",
+  data_atualizacao: "datetime"
+}
+
+8.7. Assinatura de Pacote
+----------------------
+{
+  id: "uuid",
+  cliente_id: "uuid",
+  pacote_id: "uuid",
+  nome_pacote: "string",
+  data_inicio: "datetime",
+  data_fim: "datetime",
+  preco: "decimal",
+  status: "enum (ativo, expirado, cancelado)",
+  data_criacao: "datetime",
+  data_atualizacao: "datetime"
+}
+
+8.8. Agendamento
+-------------
+{
+  id: "uuid",
+  cliente_id: "uuid",
+  servico_id: "uuid",
+  funcionario_id: "uuid",
+  data_hora: "datetime",
+  status: "enum (agendado, confirmado, concluido, cancelado, faltou)",
+  assinatura_pacote_id: "uuid (opcional)",
+  observacoes: "string (opcional)",
+  pago: "boolean",
+  valor_pago: "decimal (opcional)",
+  data_criacao: "datetime",
+  data_atualizacao: "datetime"
+}
+
+8.9. Transação Financeira
+----------------------
+{
+  id: "uuid",
+  descricao: "string",
+  valor: "decimal",
+  data: "datetime",
+  tipo: "enum (receita, despesa)",
+  categoria: "string",
+  agendamento_id: "uuid (opcional)",
+  assinatura_pacote_id: "uuid (opcional)",
+  data_criacao: "datetime",
+  data_atualizacao: "datetime"
+}
+
+8.10. Configuração
+---------------
+{
+  chave: "string",
+  valor: "string",
+  descricao: "string (opcional)",
+  data_atualizacao: "datetime"
+}
+
+9. TRATAMENTO DE ERROS
+=============================================================
+
+A API implementa um sistema de tratamento de erros consistente, utilizando códigos de status HTTP apropriados e mensagens de erro descritivas.
+
+9.1. Estrutura de Resposta de Erro
+--------------------------------
+{
+  success: false,
+  message: "Mensagem de erro",
+  stack: "Stack trace (apenas em ambiente de desenvolvimento)"
+}
+
+9.2. Códigos de Status HTTP
+-------------------------
+- 400 Bad Request: Requisição inválida (dados ausentes ou inválidos)
+- 401 Unauthorized: Autenticação necessária ou falha na autenticação
+- 403 Forbidden: Usuário autenticado, mas sem permissão para o recurso
+- 404 Not Found: Recurso não encontrado
+- 409 Conflict: Conflito (ex: email já cadastrado)
+- 500 Internal Server Error: Erro interno do servidor
+
+9.3. Classe ApiError
+-----------------
+A API utiliza uma classe personalizada `ApiError` para criar erros com códigos de status HTTP específicos:
+
+throw new ApiError("Mensagem de erro", statusCode);
+
+10. BOAS PRÁTICAS E CONVENÇÕES
+=============================================================
+
+10.1. Nomenclatura
+---------------
+- Arquivos: camelCase para arquivos JavaScript (ex: `usuarioModel.js`)
+- Variáveis e Funções: camelCase (ex: `findById`)
+- Classes: PascalCase (ex: `ApiError`)
+- Constantes: UPPER_SNAKE_CASE (ex: `JWT_SECRET`)
+- Tabelas do Banco de Dados: snake_case (ex: `categorias_servicos`)
+
+10.2. Estrutura de Código
+----------------------
+- Cada controller é responsável por um recurso específico
+- Cada model encapsula a lógica de acesso ao banco de dados para uma entidade
+- As rotas são organizadas por recurso
+
+10.3. Padrões de Resposta
+----------------------
+Todas as respostas seguem um formato consistente:
+
+// Sucesso
+{
+  success: true,
+  message: "Mensagem de sucesso (opcional)",
+  data: { ... } // Dados retornados
+}
+
+// Listagem com paginação
+{
+  success: true,
+  count: 10, // Número de itens na página atual
+  total: 100, // Número total de itens
+  page: 1, // Página atual
+  pages: 10, // Número total de páginas
+  data: [ ... ] // Dados retornados
+}
+
+11. CONSIDERAÇÕES DE SEGURANÇA
+=============================================================
+
+11.1. Autenticação e Autorização
+-----------------------------
+- Senhas armazenadas com hash usando bcrypt
+- Tokens JWT com expiração
+- Verificação de permissões baseada em papéis
+
+11.2. Proteção contra Ataques Comuns
+---------------------------------
+- Helmet: Configuração de cabeçalhos HTTP de segurança
+- CORS: Configuração para permitir apenas origens confiáveis
+- Rate Limiting: Limitação de requisições por IP (a ser implementado)
+- Validação de Entrada: Validação rigorosa de todos os dados de entrada
+
+11.3. Segurança do Banco de Dados
+------------------------------
+- Uso de prepared statements para prevenir SQL Injection
+- Conexões seguras com o banco de dados
+- Princípio do menor privilégio para o usuário do banco de dados
+
+12. DOCUMENTAÇÃO DA API
+=============================================================
+
+A API é documentada usando Swagger/OpenAPI. A documentação está disponível em:
+
+http://localhost:3000/api-docs
+
+A documentação inclui:
+- Descrição de todos os endpoints
+- Parâmetros de requisição
+- Exemplos de respostas
+- Esquemas de dados
+- Autenticação e autorização
+
+13. CONSIDERAÇÕES PARA IMPLANTAÇÃO
+=============================================================
+
+13.1. Ambiente de Produção
+-----------------------
+Para implantar a API em ambiente de produção, considere:
+- Configurar variáveis de ambiente apropriadas
+- Usar um proxy reverso (Nginx, Apache)
+- Configurar HTTPS
+- Implementar monitoramento e logging
+- Configurar backups do banco de dados
+
+13.2. Escalabilidade
+-----------------
+Para escalar a API:
+- Considere usar um balanceador de carga
+- Implemente cache para operações frequentes
+- Otimize consultas ao banco de dados
+- Considere usar um serviço de banco de dados gerenciado
+
+14. CONCLUSÃO
+=============================================================
+
+Esta API RESTful fornece uma base sólida para o sistema de gerenciamento de salão de beleza, com recursos completos para gerenciar clientes, agendamentos, serviços, funcionários e finanças. A arquitetura modular e as boas práticas implementadas facilitam a manutenção e a extensão do sistema.
+
+=============================================================
+APÊNDICE A: EXEMPLOS DE REQUISIÇÕES
+=============================================================
+
+A.1. Autenticação
+---------------
+# Login
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@exemplo.com", "senha": "senha123"}'
+
+# Resposta
+{
+  "success": true,
+  "message": "Login bem-sucedido",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "usuario": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "nome": "Admin",
+    "email": "admin@exemplo.com",
+    "tipo": "admin"
+  }
+}
+
+A.2. Criar Cliente
+---------------
+# Criar cliente
+curl -X POST http://localhost:3000/api/clientes \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -d '{
+    "nome": "João Silva",
+    "email": "joao@exemplo.com",
+    "telefone": "(11) 98765-4321",
+    "cpf": "123.456.789-00",
+    "data_nascimento": "1990-01-01"
+  }'
+
+# Resposta
+{
+  "success": true,
+  "message": "Cliente criado com sucesso",
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440001",
+    "nome": "João Silva",
+    "email": "joao@exemplo.com",
+    "telefone": "(11) 98765-4321",
+    "cpf": "123.456.789-00",
+    "data_nascimento": "1990-01-01",
+    "total_gasto": 0,
+    "qtd_agendamentos": 0,
+    "data_criacao": "2023-01-01T12:00:00.000Z",
+    "data_atualizacao": "2023-01-01T12:00:00.000Z"
+  }
+}
+
+A.3. Criar Agendamento
+------------------
+# Criar agendamento
+curl -X POST http://localhost:3000/api/agendamentos \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -d '{
+    "cliente_id": "550e8400-e29b-41d4-a716-446655440001",
+    "servico_id": "550e8400-e29b-41d4-a716-446655440002",
+    "funcionario_id": "550e8400-e29b-41d4-a716-446655440003",
+    "data_hora": "2023-01-15T14:00:00.000Z",
+    "observacoes": "Cliente prefere atendimento rápido"
+  }'
+
+# Resposta
+{
+  "success": true,
+  "message": "Agendamento criado com sucesso",
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440004",
+    "cliente_id": "550e8400-e29b-41d4-a716-446655440001",
+    "servico_id": "550e8400-e29b-41d4-a716-446655440002",
+    "funcionario_id": "550e8400-e29b-41d4-a716-446655440003",
+    "data_hora": "2023-01-15T14:00:00.000Z",
+    "status": "agendado",
+    "observacoes": "Cliente prefere atendimento rápido",
+    "pago": 0,
+    "cliente_nome": "João Silva",
+    "servico_nome": "Corte de Cabelo",
+    "funcionario_nome": "Maria Oliveira",
+    "data_criacao": "2023-01-01T12:00:00.000Z",
+    "data_atualizacao": "2023-01-01T12:00:00.000Z"
+  }
+}
+
+=============================================================
+VARIÁVEIS DE AMBIENTE NECESSÁRIAS
+=============================================================
+
+As seguintes variáveis de ambiente devem ser configuradas no arquivo .env:
+
+PORT=3000
+NODE_ENV=development
+DB_HOST=br38.hostgator.com.br
+DB_USER=klebe351_kleberGo
+DB_PASSWORD=D05m09@123
+DB_NAME=klebe351_salaobeleza
+DB_PORT=3306
+JWT_SECRET=D05m09@123@357
+JWT_EXPIRES_IN=1d
